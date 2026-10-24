@@ -1,4 +1,5 @@
-package main
+// 协议来源：CxStudy cxapi/task_point/video.py、document.py、resolver/media.py；见 UPSTREAM.md。
+package chaoxing
 
 import (
 	"context"
@@ -48,10 +49,10 @@ func (c *Client) videoReport(ctx context.Context, course Course, j Job, token st
 	}
 	var response map[string]any
 	if decodeJSON(b, &response) != nil {
-		return false, failure("UPSTREAM_FORMAT", "视频进度响应不是 JSON", 6)
+		return false, Failure("UPSTREAM_FORMAT", "视频进度响应不是 JSON", 6)
 	}
 	if str(response["error"]) != "" {
-		return false, failure("REPORT_REJECTED", str(response["error"]), 6)
+		return false, Failure("REPORT_REJECTED", str(response["error"]), 6)
 	}
 	return truth(response["isPassed"]), nil
 }
@@ -61,15 +62,15 @@ func (c *Client) learnVideo(ctx context.Context, course Course, j Job, speed flo
 		return err
 	}
 	if str(info["status"]) != "success" {
-		return failure("VIDEO_UNAVAILABLE", "视频资源暂不可用", 6)
+		return Failure("VIDEO_UNAVAILABLE", "视频资源暂不可用", 6)
 	}
 	duration := integer(info["duration"])
 	if duration <= 0 {
-		return failure("UPSTREAM_FORMAT", "视频时长缺失", 6)
+		return Failure("UPSTREAM_FORMAT", "视频时长缺失", 6)
 	}
 	token := str(info["dtoken"])
 	if token == "" {
-		return failure("UPSTREAM_FORMAT", "视频缺少 dtoken", 6)
+		return Failure("UPSTREAM_FORMAT", "视频缺少 dtoken", 6)
 	}
 	start := j.PlayTime / 1000
 	if start > duration {
@@ -90,7 +91,7 @@ func (c *Client) learnVideo(ctx context.Context, course Course, j Job, speed flo
 		if playing >= duration {
 			endReports++
 			if endReports >= 3 {
-				return failure("COMPLETION_UNCONFIRMED", "播放时长已达到，但平台未确认完成："+j.ID, 7)
+				return Failure("COMPLETION_UNCONFIRMED", "播放时长已达到，但平台未确认完成："+j.ID, 7)
 			}
 		}
 		pause := time.Duration(math.Min(58/speed, math.Max(1, float64(duration-playing)/speed)) * float64(time.Second))
@@ -99,7 +100,7 @@ func (c *Client) learnVideo(ctx context.Context, course Course, j Job, speed flo
 		}
 	}
 }
-func (c *Client) study(ctx context.Context, course Course, jobs []Job, speed float64, dry bool, emit func(any)) ([]StudyResult, error) {
+func (c *Client) Study(ctx context.Context, course Course, jobs []Job, speed float64, dry bool, emit func(any)) ([]StudyResult, error) {
 	result := []StudyResult{}
 	for _, job := range jobs {
 		if job.Type != "video" && job.Type != "audio" && job.Type != "document" {
@@ -128,17 +129,17 @@ func (c *Client) study(ctx context.Context, course Course, jobs []Job, speed flo
 			}
 			var ack map[string]any
 			if decodeJSON(b, &ack) != nil {
-				return result, failure("UPSTREAM_FORMAT", "文档进度响应不是 JSON", 6)
+				return result, Failure("UPSTREAM_FORMAT", "文档进度响应不是 JSON", 6)
 			}
 			if str(ack["error"]) != "" {
-				return result, failure("REPORT_REJECTED", str(ack["error"]), 6)
+				return result, Failure("REPORT_REJECTED", str(ack["error"]), 6)
 			}
 			checked, e := c.refreshJob(ctx, course, j)
 			if e != nil {
 				return result, e
 			}
 			if !checked.Passed {
-				return result, failure("COMPLETION_UNCONFIRMED", "文档进度未确认完成", 7)
+				return result, Failure("COMPLETION_UNCONFIRMED", "文档进度未确认完成", 7)
 			}
 		} else if err = c.learnVideo(ctx, course, j, speed, emit); err != nil {
 			return result, err

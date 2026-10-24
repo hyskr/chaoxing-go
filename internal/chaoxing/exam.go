@@ -1,10 +1,12 @@
-package main
+// 协议来源：CxStudy cxapi/exam.py: parse_question、ExamDto.fetch_all；见 UPSTREAM.md。
+package chaoxing
 
 import (
 	"context"
-	"golang.org/x/net/html"
 	"net/url"
 	"strings"
+
+	"golang.org/x/net/html"
 )
 
 func parseExamHTML(b []byte, id string) (Paper, error) {
@@ -14,10 +16,10 @@ func parseExamHTML(b []byte, id string) (Paper, error) {
 		return p, err
 	}
 	if tip := cls(doc, "blankTips"); tip != nil {
-		return p, failure("EXAM_UNAVAILABLE", compact(tip), 5)
+		return p, Failure("EXAM_UNAVAILABLE", compact(tip), 5)
 	}
 	if tip := cls(doc, "msg"); tip != nil && byID(doc, "submitTest") == nil {
-		return p, failure("EXAM_UNAVAILABLE", compact(tip), 5)
+		return p, Failure("EXAM_UNAVAILABLE", compact(tip), 5)
 	}
 	p.Title = compact(cls(doc, "examTit"))
 	if p.Title == "" {
@@ -33,7 +35,7 @@ func parseExamHTML(b []byte, id string) (Paper, error) {
 		qid := attr(find(node, func(n *html.Node) bool { return n.Data == "input" && attr(n, "name") == "questionId" }), "value")
 		typ := attr(find(node, func(n *html.Node) bool { return n.Data == "input" && attr(n, "name") == "type"+qid }), "value")
 		stem := cls(node, "tit")
-		q := Question{ID: qid, Type: questionType(typ), Options: []Option{}, HTML: render(stem)}
+		q := Question{ID: qid, Type: QuestionType(typ), Options: []Option{}, HTML: render(stem)}
 		var pieces []string
 		for ch := stemFirst(stem); ch != nil; ch = ch.NextSibling {
 			if ch.Type == html.ElementNode && ch.Data == "h3" {
@@ -84,12 +86,12 @@ func parseExamHTML(b []byte, id string) (Paper, error) {
 			q.Answer = values
 		}
 		if qid == "" || q.Text == "" {
-			return p, failure("UPSTREAM_FORMAT", "考试题目解析不完整", 6)
+			return p, Failure("UPSTREAM_FORMAT", "考试题目解析不完整", 6)
 		}
 		p.Questions = append(p.Questions, q)
 	}
 	if len(p.Questions) == 0 {
-		return p, failure("EXAM_NOT_READY", "当前页面没有整卷题目，请先在学习通进入考试并取得当前试卷URL", 5)
+		return p, Failure("EXAM_NOT_READY", "当前页面没有整卷题目，请先在学习通进入考试并取得当前试卷URL", 5)
 	}
 	return p, nil
 }
@@ -99,10 +101,10 @@ func stemFirst(n *html.Node) *html.Node {
 	}
 	return n.FirstChild
 }
-func (c *Client) exportExam(ctx context.Context, entry string) (Paper, error) {
+func (c *Client) ExportExam(ctx context.Context, entry string) (Paper, error) {
 	u, err := url.Parse(entry)
 	if err != nil || u.Scheme != "https" || !strings.HasSuffix(u.Hostname(), ".chaoxing.com") {
-		return Paper{}, failure("INVALID_ARGUMENT", "--url 需要已进入试卷的超星HTTPS地址", 2)
+		return Paper{}, Failure("INVALID_ARGUMENT", "--url 需要已进入试卷的超星HTTPS地址", 2)
 	}
 	q := u.Query()
 	examID := first(q.Get("tId"), q.Get("examRelationId"))
@@ -111,10 +113,10 @@ func (c *Client) exportExam(ctx context.Context, entry string) (Paper, error) {
 	class := q.Get("classId")
 	cpi := q.Get("cpi")
 	if examID == "" || answerID == "" || course == "" || class == "" || cpi == "" {
-		return Paper{}, failure("INVALID_ARGUMENT", "试卷URL缺少考试ID、作答ID、课程、班级或cpi", 2)
+		return Paper{}, Failure("INVALID_ARGUMENT", "试卷URL缺少考试ID、作答ID、课程、班级或cpi", 2)
 	}
 	if !strings.Contains(u.Path, "reVersionTestStartNew") && !strings.Contains(u.Path, "/preview") {
-		return Paper{}, failure("INVALID_ARGUMENT", "请传入答题页或整卷预览URL", 2)
+		return Paper{}, Failure("INVALID_ARGUMENT", "请传入答题页或整卷预览URL", 2)
 	}
 	// 沿用已启动的答题会话，首次请求只读取当前题目及有效时间参数。
 	if q.Has("tag") {
@@ -130,15 +132,15 @@ func (c *Client) exportExam(ctx context.Context, entry string) (Paper, error) {
 		return Paper{}, err
 	}
 	if tip := cls(doc, "blankTips"); tip != nil {
-		return Paper{}, failure("EXAM_UNAVAILABLE", compact(tip), 5)
+		return Paper{}, Failure("EXAM_UNAVAILABLE", compact(tip), 5)
 	}
 	form := byID(doc, "submitTest")
 	if form == nil {
-		return Paper{}, failure("EXAM_NOT_READY", "尚未进入试卷，或会话需要重新验证", 5)
+		return Paper{}, Failure("EXAM_NOT_READY", "尚未进入试卷，或会话需要重新验证", 5)
 	}
 	val := func(key string) string { return attr(byID(form, key), "value") }
 	if val("enc") == "" || val("encRemainTime") == "" || val("encLastUpdateTime") == "" {
-		return Paper{}, failure("UPSTREAM_FORMAT", "试卷会话参数缺失", 6)
+		return Paper{}, Failure("UPSTREAM_FORMAT", "试卷会话参数缺失", 6)
 	}
 	query := url.Values{"courseId": {course}, "classId": {class}, "source": {"0"}, "start": {"0"}, "imei": {c.DeviceID}, "cpi": {cpi}, "examRelationId": {examID}, "examRelationAnswerId": {answerID}, "monitorStatus": {"0"}, "monitorOp": {"-1"}, "remainTimeParam": {val("encRemainTime")}, "relationAnswerLastUpdateTime": {val("encLastUpdateTime")}, "enc": {val("enc")}}
 	b, err = c.request(ctx, "GET", apiHost+"/exam-ans/exam/phone/preview", query, nil)

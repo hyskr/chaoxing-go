@@ -1,19 +1,16 @@
-package main
+// 协议来源：CxStudy cxapi/session.py、cxapi/utils.py: 会话、mobile_ua_sign、get_ua；见 UPSTREAM.md。
+package chaoxing
 
 import (
 	"context"
-	"crypto/aes"
-	"crypto/cipher"
 	"crypto/md5"
 	"crypto/rand"
-	"encoding/base64"
 	"encoding/hex"
 	"io"
 	"net/http"
 	"net/http/cookiejar"
 	"net/url"
 	"os"
-	"path/filepath"
 	"strings"
 	"time"
 )
@@ -27,7 +24,7 @@ type Client struct {
 	DeviceID string
 }
 
-func newClient(path string) (*Client, error) {
+func NewClient(path string) (*Client, error) {
 	jar, _ := cookiejar.New(nil)
 	device := make([]byte, 16)
 	if _, err := rand.Read(device); err != nil {
@@ -92,86 +89,27 @@ func (c *Client) request(ctx context.Context, method, endpoint string, q, form u
 		if ctx.Err() != nil {
 			return nil, ctx.Err()
 		}
-		return nil, failure("NETWORK_ERROR", "网络请求失败："+u.Path, 6)
+		return nil, Failure("NETWORK_ERROR", "网络请求失败："+u.Path, 6)
 	}
 	defer r.Body.Close()
 	b, err := io.ReadAll(r.Body)
 	if err != nil {
-		return nil, failure("NETWORK_ERROR", "响应读取失败", 6)
+		return nil, Failure("NETWORK_ERROR", "响应读取失败", 6)
 	}
 	if strings.Contains(r.Request.URL.Host, "passport") && !strings.Contains(u.Host, "passport") {
-		return nil, failure("AUTH_REQUIRED", "登录会话已失效", 3)
+		return nil, Failure("AUTH_REQUIRED", "登录会话已失效", 3)
 	}
 	if strings.Contains(r.Request.URL.Path, "antispiderShowVerify") || strings.Contains(string(b), "安全验证不通过") {
-		return nil, failure("CHALLENGE_REQUIRED", "需要先在学习通完成人机验证，再重新登录", 3)
+		return nil, Failure("CHALLENGE_REQUIRED", "需要先在学习通完成人机验证，再重新登录", 3)
 	}
 	if r.StatusCode == 401 {
-		return nil, failure("AUTH_REQUIRED", "请先使用 auth login 登录", 3)
+		return nil, Failure("AUTH_REQUIRED", "请先使用 auth login 登录", 3)
 	}
 	if r.StatusCode == 403 {
-		return nil, failure("PERMISSION_DENIED", "平台拒绝请求："+u.Path, 4)
+		return nil, Failure("PERMISSION_DENIED", "平台拒绝请求："+u.Path, 4)
 	}
 	if r.StatusCode >= 400 {
-		return nil, failure("UPSTREAM_ERROR", "平台请求失败："+r.Status, 6)
+		return nil, Failure("UPSTREAM_ERROR", "平台请求失败："+r.Status, 6)
 	}
 	return b, nil
-}
-func (c *Client) auth(ctx context.Context) (any, error) {
-	b, err := c.request(ctx, "GET", "https://sso.chaoxing.com/apis/login/userLogin4Uname.do", nil, nil)
-	if err != nil {
-		return nil, err
-	}
-	var j map[string]any
-	if err = decodeJSON(b, &j); err != nil {
-		return nil, failure("UPSTREAM_FORMAT", "登录状态响应不是 JSON", 6)
-	}
-	if !truth(j["result"]) {
-		return nil, failure("AUTH_REQUIRED", "登录会话已失效", 3)
-	}
-	return map[string]any{"authenticated": true}, nil
-}
-func encryptPassword(s string) string {
-	key := []byte("u2oh6Vu^HWe4_AES")
-	b := []byte(s)
-	pad := aes.BlockSize - len(b)%aes.BlockSize
-	for i := 0; i < pad; i++ {
-		b = append(b, byte(pad))
-	}
-	block, _ := aes.NewCipher(key)
-	cipher.NewCBCEncrypter(block, key).CryptBlocks(b, b)
-	return base64.StdEncoding.EncodeToString(b)
-}
-func (c *Client) login(ctx context.Context, phone, password string) (any, error) {
-	b, err := c.request(ctx, "POST", "https://passport2.chaoxing.com/fanyalogin", nil, url.Values{"fid": {"-1"}, "uname": {encryptPassword(phone)}, "password": {encryptPassword(password)}, "t": {"true"}, "refer": {"https://i.chaoxing.com"}})
-	if err != nil {
-		return nil, err
-	}
-	var j map[string]any
-	if decodeJSON(b, &j) != nil {
-		return nil, failure("UPSTREAM_FORMAT", "登录响应不是 JSON", 6)
-	}
-	if !truth(j["status"]) {
-		return nil, failure("AUTH_REQUIRED", first(j["msg2"], j["msg"], "登录失败，请使用网页登录并导入 Cookie"), 3)
-	}
-	if jump := str(j["url"]); jump != "" {
-		jump, _ = url.QueryUnescape(jump)
-		if _, err = c.request(ctx, "GET", jump, nil, nil); err != nil {
-			return nil, err
-		}
-	}
-	u, _ := url.Parse("https://passport2.chaoxing.com")
-	var saved []string
-	for _, x := range c.HTTP.Jar.Cookies(u) {
-		saved = append(saved, x.Name+"="+x.Value)
-	}
-	if len(saved) == 0 {
-		return nil, failure("AUTH_REQUIRED", "平台没有返回登录 Cookie", 3)
-	}
-	if err = os.MkdirAll(filepath.Dir(c.Cookies), 0700); err != nil {
-		return nil, err
-	}
-	if err = os.WriteFile(c.Cookies, []byte(strings.Join(saved, ";")), 0600); err != nil {
-		return nil, err
-	}
-	return map[string]any{"authenticated": true, "cookie_file": c.Cookies}, nil
 }

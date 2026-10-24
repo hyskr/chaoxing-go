@@ -1,15 +1,17 @@
-package main
+// 协议来源：CxStudy cxapi/task_point/work.py: parse_question、construct_questions_form、PointWorkDto。见 UPSTREAM.md。
+package chaoxing
 
 import (
 	"context"
-	"golang.org/x/net/html"
 	"net/url"
 	"regexp"
 	"strconv"
 	"strings"
+
+	"golang.org/x/net/html"
 )
 
-func questionType(n string) string {
+func QuestionType(n string) string {
 	switch n {
 	case "0":
 		return "single"
@@ -46,7 +48,7 @@ func parseQuiz(b []byte, j Job) (Paper, error) {
 		return p, err
 	}
 	if tip := cls(doc, "blankTips"); tip != nil {
-		return p, failure("WORK_UNAVAILABLE", compact(tip), 5)
+		return p, Failure("WORK_UNAVAILABLE", compact(tip), 5)
 	}
 	title := tag(doc, "title")
 	p.Completed = strings.Contains(compact(title), "已批阅")
@@ -66,16 +68,16 @@ func parseQuiz(b []byte, j Job) (Paper, error) {
 	}
 	form := byID(doc, "form1")
 	if form == nil {
-		return p, failure("UPSTREAM_FORMAT", "没有找到章节测验表单", 6)
+		return p, Failure("UPSTREAM_FORMAT", "没有找到章节测验表单", 6)
 	}
 	p.form = inputs(form)
 	for _, node := range findAll(form, func(n *html.Node) bool { return hasClass(n, "Py-mian1") }) {
 		input := find(node, func(n *html.Node) bool { return n.Data == "input" && strings.HasPrefix(attr(n, "id"), "answertype") })
 		if input == nil {
-			return p, failure("UPSTREAM_FORMAT", "题目缺少题型与ID", 6)
+			return p, Failure("UPSTREAM_FORMAT", "题目缺少题型与ID", 6)
 		}
 		id := strings.TrimPrefix(attr(input, "id"), "answertype")
-		qt := questionType(attr(input, "value"))
+		qt := QuestionType(attr(input, "value"))
 		stem := cls(node, "Py-m1-title")
 		q := Question{ID: id, Type: qt, HTML: render(stem), Options: []Option{}}
 		// 题号和题型是题干容器的前两个文本片段，保留后续完整正文。
@@ -110,16 +112,16 @@ func parseQuiz(b []byte, j Job) (Paper, error) {
 			q.Blanks++
 		}
 		if q.ID == "" || q.Text == "" {
-			return p, failure("UPSTREAM_FORMAT", "题目解析不完整", 6)
+			return p, Failure("UPSTREAM_FORMAT", "题目解析不完整", 6)
 		}
 		p.Questions = append(p.Questions, q)
 	}
 	if len(p.Questions) == 0 {
-		return p, failure("UPSTREAM_FORMAT", "表单中没有解析到题目", 6)
+		return p, Failure("UPSTREAM_FORMAT", "表单中没有解析到题目", 6)
 	}
 	return p, nil
 }
-func (c *Client) quiz(ctx context.Context, course Course, j Job) (Paper, error) {
+func (c *Client) Quiz(ctx context.Context, course Course, j Job) (Paper, error) {
 	j, err := c.refreshJob(ctx, course, j)
 	if err != nil {
 		return Paper{}, err
@@ -134,17 +136,17 @@ func (c *Client) quiz(ctx context.Context, course Course, j Job) (Paper, error) 
 	}
 	return parseQuiz(b, j)
 }
-func (c *Client) submitQuiz(ctx context.Context, course Course, p Paper, answers map[string]any) (any, error) {
+func (c *Client) SubmitQuiz(ctx context.Context, course Course, p Paper, answers map[string]any) (any, error) {
 	if p.Completed {
-		return nil, failure("ALREADY_COMPLETED", "此测验已经提交并批阅", 5)
+		return nil, Failure("ALREADY_COMPLETED", "此测验已经提交并批阅", 5)
 	}
 	form := url.Values(p.form)
 	ids := []string{}
 	for _, q := range p.Questions {
 		if q.Type == "shortanswer" || q.Type == "unknown" {
-			return nil, failure("UNSUPPORTED_QUESTION", "当前测验提交不支持题型 "+q.Type, 5)
+			return nil, Failure("UNSUPPORTED_QUESTION", "当前测验提交不支持题型 "+q.Type, 5)
 		}
-		answer, err := normalizeAnswer(q, answers[q.ID])
+		answer, err := NormalizeAnswer(q, answers[q.ID])
 		if err != nil {
 			return nil, err
 		}
@@ -180,14 +182,14 @@ func (c *Client) submitQuiz(ctx context.Context, course Course, p Paper, answers
 	}
 	var response map[string]any
 	if decodeJSON(b, &response) != nil {
-		return nil, failure("SUBMISSION_UNCONFIRMED", "未取得提交结果，请在网页确认后再重试", 7)
+		return nil, Failure("SUBMISSION_UNCONFIRMED", "未取得提交结果，请在网页确认后再重试", 7)
 	}
 	if !truth(response["status"]) {
-		return nil, failure("SUBMIT_REJECTED", first(response["msg"], "平台拒绝提交"), 6)
+		return nil, Failure("SUBMIT_REJECTED", first(response["msg"], "平台拒绝提交"), 6)
 	}
-	review, err := c.quiz(ctx, course, p.job)
+	review, err := c.Quiz(ctx, course, p.job)
 	if err != nil {
-		return map[string]any{"submitted": true, "verified": false, "work_id": p.ID}, failure("REVIEW_UNAVAILABLE", "提交成功，但暂未读取到批阅结果", 7)
+		return map[string]any{"submitted": true, "verified": false, "work_id": p.ID}, Failure("REVIEW_UNAVAILABLE", "提交成功，但暂未读取到批阅结果", 7)
 	}
 	return map[string]any{"submitted": true, "verified": review.Completed, "paper": review}, nil
 }

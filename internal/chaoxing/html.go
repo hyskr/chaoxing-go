@@ -1,11 +1,12 @@
-package main
+package chaoxing
 
 import (
 	"bytes"
 	"encoding/json"
-	"golang.org/x/net/html"
 	"regexp"
 	"strings"
+
+	"golang.org/x/net/html"
 )
 
 func document(b []byte) (*html.Node, error) { return html.Parse(bytes.NewReader(b)) }
@@ -121,7 +122,7 @@ func assignedJSON(source, name string) (map[string]any, error) {
 	re := regexp.MustCompile(`(?:window\.)?` + regexp.QuoteMeta(name) + `\s*=\s*\{`)
 	loc := re.FindStringIndex(source)
 	if loc == nil {
-		return nil, failure("UPSTREAM_FORMAT", "页面缺少 "+name, 6)
+		return nil, Failure("UPSTREAM_FORMAT", "页面缺少 "+name, 6)
 	}
 	start := loc[1] - 1
 	depth := 0
@@ -148,11 +149,11 @@ func assignedJSON(source, name string) (map[string]any, error) {
 			if depth == 0 {
 				var m map[string]any
 				if err := json.Unmarshal([]byte(source[start:i+1]), &m); err != nil {
-					return nil, failure("UPSTREAM_FORMAT", "任务数据不是有效 JSON", 6)
+					return nil, Failure("UPSTREAM_FORMAT", "任务数据不是有效 JSON", 6)
 				}
 				return m, nil
 			}
 		}
 	}
-	return nil, failure("UPSTREAM_FORMAT", "任务 JSON 未闭合", 6)
+	return nil, Failure("UPSTREAM_FORMAT", "任务 JSON 未闭合", 6)
 }

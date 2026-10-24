@@ -1,4 +1,4 @@
-module chaoxing-go
+module github.com/hyskr/chaoxing-go
 
 go 1.26.0
 

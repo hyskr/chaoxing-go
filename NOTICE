@@ -1,13 +1,18 @@
 chaoxing-go
 
-平台接口流程参考并移植自 CxStudy/CxKitty：
+超星协议流程以 Go 重写，参考并移植自 CxStudy/CxKitty：
 https://github.com/Yu-dongxing/CxStudy
-基准提交：7ad1f13
-原项目作者：SocialSisterYi，CxStudy/CxKitty 贡献者
-原项目许可证：GNU General Public License v3.0
+基准提交：7ad1f13f627aca55622afef9f22c50a4951b6e61
+原项目作者及贡献者：SocialSisterYi、CxKitty 与 CxStudy 贡献者
+许可证：GNU General Public License v3.0，完整文本见 LICENSE。
+模块、上游文件、符号及本地适配对应关系见 UPSTREAM.md。
 
-命令契约设计参考：
+CLI 契约设计参考：
 https://github.com/L-1124/WkHelper
+文档对照提交：714859e1d6269f0fe6b024b4ae1c3959ab75bc2b
+参考范围：JSON 响应信封、NDJSON 事件、schema 命令自省。
 
-HTML 解析：golang.org/x/net/html，BSD-3-Clause
-终端密码读取：golang.org/x/term，BSD-3-Clause
+Go 依赖（完整版本见 go.mod/go.sum）：
+golang.org/x/net/html：HTML 解析，BSD-3-Clause。
+golang.org/x/term：终端密码读取，BSD-3-Clause。
+golang.org/x/sys：终端库间接依赖，BSD-3-Clause。

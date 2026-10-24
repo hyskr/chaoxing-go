@@ -2,14 +2,21 @@
 
 面向终端和 AI Agent 的超星学习通命令行工具，使用 Go 实现。提供账号密码登录、完整任务卡扫描、视频与文档学习、章节／随堂测验读取与指定答案提交，以及考试 JSON 读取、整理和答案填充。
 
-平台接口参考 [Yu-dongxing/CxStudy](https://github.com/Yu-dongxing/CxStudy) `7ad1f13`：账号登录、课程／章节、全部卡片、移动端章节测验、学习进度上报。命令组织、结构化响应和进度事件参考 [WkHelper](https://github.com/L-1124/WkHelper)。
+平台协议以 Go 重写，来源为 [Yu-dongxing/CxStudy](https://github.com/Yu-dongxing/CxStudy)，固定基线 `7ad1f13`。CLI 交互设计参考 [WkHelper](https://github.com/L-1124/WkHelper)。逐模块的源码来源、固定版本链接、本地适配与跟进更新步骤见 [上游来源](UPSTREAM.md)。
+
+## 项目导航
+
+- [项目结构与模块职责](docs/architecture.md)：入口、CLI、超星协议、试卷文件处理。
+- [上游来源与更新](UPSTREAM.md)：版本基线、文件／函数对应表、更新步骤。
+- [验证范围](VALIDATION.md)：真实账号与 HTTP 协议测试的覆盖情况。
+- [来源与版权](NOTICE) · [许可证](LICENSE)。
 
 ## 构建
 
 需要 Go 1.26 或更新版本。
 
 ```sh
-go build -o chaoxing .
+go build -o chaoxing ./cmd/chaoxing
 go test ./...
 ./chaoxing schema
 ```
@@ -151,4 +158,4 @@ stdout 每次只输出一个 JSON 响应；stderr 用于 NDJSON 进度事件及�
 
 ## 许可证
 
-GPL-3.0。平台接口流程移植自 CxStudy/CxKitty；来源与版权说明见 `NOTICE`。
+GPL-3.0。平台接口流程移植自 CxStudy/CxKitty；来源与版权说明见 [NOTICE](NOTICE)，具体实现对应关系见 [UPSTREAM.md](UPSTREAM.md)。
