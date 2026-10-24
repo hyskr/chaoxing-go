@@ -10,9 +10,11 @@ https://github.com/Yu-dongxing/CxStudy
 CLI 契约设计参考：
 https://github.com/L-1124/WkHelper
 文档对照提交：714859e1d6269f0fe6b024b4ae1c3959ab75bc2b
-参考范围：JSON 响应信封、NDJSON 事件、schema 命令自省。
+参考范围：TTY 可读展示／管道 JSON、响应信封、NDJSON 事件、schema 命令自省。
 
 Go 依赖（完整版本见 go.mod/go.sum）：
+github.com/mattn/go-runewidth：终端字符宽度与中文表格对齐，MIT。
+github.com/clipperhouse/uax29/v2：字符宽度库间接依赖，MIT。
 golang.org/x/net/html：HTML 解析，BSD-3-Clause。
 golang.org/x/term：终端密码读取，BSD-3-Clause。
 golang.org/x/sys：终端库间接依赖，BSD-3-Clause。

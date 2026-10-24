@@ -7,7 +7,7 @@
 | 来源 | 固定版本 | 用途 |
 |---|---|---|
 | [Yu-dongxing/CxStudy](https://github.com/Yu-dongxing/CxStudy) | [`7ad1f13f627aca55622afef9f22c50a4951b6e61`](https://github.com/Yu-dongxing/CxStudy/tree/7ad1f13f627aca55622afef9f22c50a4951b6e61) | 实际参考的本机 CxStudy checkout 的 HEAD；超星协议与导出格式基线 |
-| [L-1124/WkHelper](https://github.com/L-1124/WkHelper) | [`714859e1d6269f0fe6b024b4ae1c3959ab75bc2b`](https://github.com/L-1124/WkHelper/tree/714859e1d6269f0fe6b024b4ae1c3959ab75bc2b) | 2026-10-24 对照的文档基线；JSON 响应、NDJSON 事件、schema 自省的设计参考 |
+| [L-1124/WkHelper](https://github.com/L-1124/WkHelper) | [`714859e1d6269f0fe6b024b4ae1c3959ab75bc2b`](https://github.com/L-1124/WkHelper/tree/714859e1d6269f0fe6b024b4ae1c3959ab75bc2b) | 2026-10-24 对照的文档基线；TTY 自动选择可读展示、JSON 响应、NDJSON 事件、schema 自省的设计参考 |
 
 CxStudy 延续 CxKitty 项目，原项目作者及贡献者包括 SocialSisterYi、CxKitty 与 CxStudy 贡献者，许可证为 GPL-3.0，见 [上游 LICENSE](https://github.com/Yu-dongxing/CxStudy/blob/7ad1f13f627aca55622afef9f22c50a4951b6e61/LICENSE) 和本仓库 [NOTICE](NOTICE)。WkHelper 提供命令接口设计参考；超星协议来自 CxStudy，WkHelper 的 Python 模块未移植进本项目。
 
@@ -27,7 +27,9 @@ CxStudy 延续 CxKitty 项目，原项目作者及贡献者包括 SocialSisterYi
 | [`internal/chaoxing/exam.go`](internal/chaoxing/exam.go)：`parseExamHTML`、`ExportExam` | [cxapi/exam.py](https://github.com/Yu-dongxing/CxStudy/blob/7ad1f13f627aca55622afef9f22c50a4951b6e61/cxapi/exam.py)：`parse_question`、`ExamDto.fetch_all` | 整卷预览接口、试卷 HTML 与选项字段 |
 | [`internal/chaoxing/model.go`](internal/chaoxing/model.go)、`quiz.go` 的 `QuestionType` | [cxapi/schema.py](https://github.com/Yu-dongxing/CxStudy/blob/7ad1f13f627aca55622afef9f22c50a4951b6e61/cxapi/schema.py)：`ClassModule`、`ChapterModel`、`QuestionType`、`QuestionModel` | 课程与题目字段、平台数字题型；Go 输出模型在本项目定义 |
 | [`internal/paper/file.go`](internal/paper/file.go) | [cxapi/schema.py](https://github.com/Yu-dongxing/CxStudy/blob/7ad1f13f627aca55622afef9f22c50a4951b6e61/cxapi/schema.py)：`QuestionsExportSchema`；[cxapi/exam.py](https://github.com/Yu-dongxing/CxStudy/blob/7ad1f13f627aca55622afef9f22c50a4951b6e61/cxapi/exam.py)：`ExamDto.export` | 兼容 CxStudy 导出 JSON；读取、归一化、答案填充和 Markdown 转换由本项目实现 |
-| [`internal/cli/`](internal/cli) | [WkHelper README：核心特性与架构](https://github.com/L-1124/WkHelper/blob/714859e1d6269f0fe6b024b4ae1c3959ab75bc2b/README.md) | 结构化输出与命令自省设计；命令定义、解析、退出码和调度由本项目实现 |
+| [`internal/cli/`](internal/cli) | [WkHelper README：核心特性与架构](https://github.com/L-1124/WkHelper/blob/714859e1d6269f0fe6b024b4ae1c3959ab75bc2b/README.md) | 终端可读展示／管道 JSON、结构化输出与命令自省设计；Go 表格、命令定义、解析、退出码和调度由本项目实现 |
+
+终端展示另对照 WkHelper 的 [cli/context.py](https://github.com/L-1124/WkHelper/blob/714859e1d6269f0fe6b024b4ae1c3959ab75bc2b/wkhelper/cli/context.py)、[cli/output.py](https://github.com/L-1124/WkHelper/blob/714859e1d6269f0fe6b024b4ae1c3959ab75bc2b/wkhelper/cli/output.py) 和 [cli/markdown.py](https://github.com/L-1124/WkHelper/blob/714859e1d6269f0fe6b024b4ae1c3959ab75bc2b/wkhelper/cli/markdown.py) 的 TTY 选择与可读呈现方式。Go 实现在 `internal/cli/text.go`，展示选择参数为 `--output`；`exam read --format` 用于试卷文件格式。
 
 `internal/chaoxing/html.go` 使用 `golang.org/x/net/html` 自行实现 DOM 遍历与 JS 对象提取；`answer.go` 实现统一答案校验；`errors.go` 实现本工具错误约定。`cmd/chaoxing`、测试夹具与示例文件由本项目维护。
 

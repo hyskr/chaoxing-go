@@ -7,7 +7,9 @@ internal/
   cli/
     schema.go              命令及参数定义、解析
     execute.go             命令调度、终端密码输入、文件输出
-    response.go            JSON 响应、错误与退出码映射
+    response.go            输出模式调度、JSON 响应、错误与退出码映射
+    text.go                TTY 自动选择、中文表格、题目与进度展示
+    text_test.go           文本输出、中文列宽、事件与模式选择测试
     cli_test.go            CLI 契约与本地试卷流程测试
   chaoxing/
     client.go              HTTP、Cookie、移动端 UA

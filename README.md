@@ -66,7 +66,7 @@ go test ./...
 
 依次执行视频、音频与文档任务，已完成的任务会跳过。视频从服务器提供的播放进度继续，速度范围为 1～2；进度按时间推进并向平台上报。完成以平台 `isPassed` 为准，达到时长却未确认完成时返回错误。使用 Ctrl+C 停止，之后重新运行会读取服务器上的最新进度。
 
-执行过程中，stderr 输出单行 JSON 事件：
+JSON 模式执行过程中，stderr 输出单行 JSON 事件；终端文本模式显示可读进度：
 
 ```json
 {"event":"video.progress","job_id":"video-job","seconds":58,"duration":300,"passed":false}
@@ -132,9 +132,26 @@ Agent 可以读取 `quiz.json`，把每题的 `answer` 填好；也可生成独�
 
 转换时保留 CxStudy 选项对象中的原始顺序，显式区分显示字母与内部键；输出 JSON 用选项数组表达顺序。填充答案会检查题型、选项键和填空数量。`exam fill` 写入新的已作答试卷文件，返回 `submitted: false`。
 
-## Agent 契约
+## 终端展示与 Agent 契约
 
-stdout 每次只输出一个 JSON 响应；stderr 用于 NDJSON 进度事件及终端密码输入提示事件。
+直接在终端运行时，课程、章节、任务和学习结果显示中文表格，试卷显示题干和选项；登录提示、播放进度和错误以中文文本显示。
+
+```sh
+./chaoxing course list
+./chaoxing quiz list --course '课程ID:班级ID'
+./chaoxing course inspect --course '课程ID:班级ID'
+./chaoxing --help
+```
+
+输出通过管道或重定向时，默认使用 JSON。`--output auto|text|json` 可放在命令前或参数后，用来显式选择展示方式；`exam read --format json|md` 仍控制试卷内容／导出文件格式。
+
+```sh
+./chaoxing course list --output json
+./chaoxing --output text quiz list --course '课程ID:班级ID'
+./chaoxing course list | jq '.data'
+```
+
+JSON 模式下，stdout 每次只输出一个 JSON 响应；stderr 用于 NDJSON 进度事件及终端密码输入提示事件。文本模式的错误和进度输出到 stderr，退出码与 JSON 模式一致。
 
 ```json
 {"schema_version":1,"ok":true,"data":{},"error":null,"meta":{"timezone":"Asia/Shanghai","complete":true},"next_actions":null}

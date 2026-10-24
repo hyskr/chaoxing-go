@@ -42,7 +42,7 @@ var commands = []CommandSpec{
 
 func init() {
 	for i := range commands {
-		commands[i].Flags = append(commands[i].Flags, FlagSpec{"data-dir", "string", ".session", false, "本工具登录会话保存目录"})
+		commands[i].Flags = append(commands[i].Flags, FlagSpec{"output", "string", "auto", false, "展示格式：auto（终端文本、管道JSON）、text或json"}, FlagSpec{"data-dir", "string", ".session", false, "本工具登录会话保存目录"})
 	}
 }
 

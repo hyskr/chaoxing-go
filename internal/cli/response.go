@@ -11,7 +11,15 @@ import (
 )
 
 func Run(ctx context.Context, args []string, stdin io.Reader, stdout, stderr io.Writer) int {
-	data, err := execute(ctx, args, stdin, stderr)
+	args, text, err := outputMode(args, stdout)
+	var data any
+	if err == nil {
+		var events io.Writer = stderr
+		if text {
+			events = textEvents{stderr}
+		}
+		data, err = execute(ctx, args, stdin, events)
+	}
 	var detail *chaoxing.AppError
 	code := 0
 	var next []string
@@ -25,6 +33,19 @@ func Run(ctx context.Context, args []string, stdin io.Reader, stdout, stderr io.
 		} else if code == 2 || code == 5 {
 			next = []string{"schema"}
 		}
+	}
+	if text {
+		if _, e := io.WriteString(stdout, textResult(data)); e != nil {
+			fmt.Fprintln(stderr, e)
+			return 1
+		}
+		if detail != nil {
+			fmt.Fprintf(stderr, "错误 [%s]：%s\n", detail.Code, detail.Message)
+			if len(next) > 0 {
+				fmt.Fprintln(stderr, "可使用：chaoxing "+next[0])
+			}
+		}
+		return code
 	}
 	response := struct {
 		Schema int                `json:"schema_version"`
