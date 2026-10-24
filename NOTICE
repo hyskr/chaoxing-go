@@ -1,0 +1,13 @@
+chaoxing-go
+
+平台接口流程参考并移植自 CxStudy/CxKitty：
+https://github.com/Yu-dongxing/CxStudy
+基准提交：7ad1f13
+原项目作者：SocialSisterYi，CxStudy/CxKitty 贡献者
+原项目许可证：GNU General Public License v3.0
+
+命令契约设计参考：
+https://github.com/L-1124/WkHelper
+
+HTML 解析：golang.org/x/net/html，BSD-3-Clause
+终端密码读取：golang.org/x/term，BSD-3-Clause

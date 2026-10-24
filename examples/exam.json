@@ -1,0 +1,21 @@
+{
+  "id": 1,
+  "title": "示例试卷",
+  "type": 0,
+  "questions": [
+    {
+      "id": 101,
+      "value": "请选择正确的操作。",
+      "type": 0,
+      "options": {"C": "遵守操作规程", "A": "跳过必要检查"},
+      "answer": null
+    },
+    {
+      "id": 102,
+      "value": "应按要求穿戴防护用品。",
+      "type": 3,
+      "options": null,
+      "answer": null
+    }
+  ]
+}
