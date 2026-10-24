@@ -1,5 +1,7 @@
 # chaoxing-go
 
+[![CI](https://github.com/hyskr/chaoxing-go/actions/workflows/ci.yml/badge.svg)](https://github.com/hyskr/chaoxing-go/actions/workflows/ci.yml)
+
 面向终端和 AI Agent 的超星学习通命令行工具，使用 Go 实现。提供账号密码登录、完整任务卡扫描、视频与文档学习、章节／随堂测验读取与指定答案提交，以及考试 JSON 读取、整理和答案填充。
 
 平台协议以 Go 重写，来源为 [Yu-dongxing/CxStudy](https://github.com/Yu-dongxing/CxStudy)，固定基线 `7ad1f13`。CLI 交互设计参考 [WkHelper](https://github.com/L-1124/WkHelper)。逐模块的源码来源、固定版本链接、本地适配与跟进更新步骤见 [上游来源](UPSTREAM.md)。
@@ -20,6 +22,12 @@ go build -o chaoxing ./cmd/chaoxing
 go test ./...
 ./chaoxing schema
 ```
+
+## 自动构建
+
+推送到 `main`、提交 Pull Request 或手动触发 [CI](https://github.com/hyskr/chaoxing-go/actions/workflows/ci.yml) 时，自动检查 Go 格式并运行全部测试。测试通过后，为 Linux、macOS、Windows 构建 amd64 和 arm64 可执行文件。
+
+进入成功的运行记录，在 **Artifacts** 下载对应平台的压缩包。Apple 芯片 Mac 选择 `chaoxing-darwin-arm64`，Intel Mac 选择 `chaoxing-darwin-amd64`。macOS／Linux 解压后执行 `chmod +x chaoxing-*`，再运行对应程序。构建包附带 `LICENSE` 和 `NOTICE`。
 
 ## 登录
 
